@@ -5,6 +5,7 @@
 .idea
 **/node_modules/*
 **/.firebaserc
+*android
 
 ### Firebase Patch ###
 .runtimeconfig.json
@@ -29,6 +30,7 @@ lib/generated_plugin_registrant.dart
 #pubspec.lock
 
 # Android related
+**/android/app/
 **/android/**/gradle-wrapper.jar
 **/android/.gradle
 **/android/captures/
