@@ -1,20 +1,27 @@
 // lib/main.dart
 import 'package:app/screens/home_screens.dart';
 import 'package:app/screens/logIn_screens.dart';
+import 'package:app/services/Userservice.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'controllers/user_controllers.dart';
 
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  runApp(MyApp());
+  // Instantiate dependencies
+  final firebaseService = FirebaseService();
+
+  runApp(MyApp(firebaseService: firebaseService));
 }
 
 class MyApp extends StatelessWidget {
+  final FirebaseService firebaseService;
+
+  MyApp({required this.firebaseService});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -23,7 +30,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       initialBinding: BindingsBuilder(() {
-        Get.put(UserController());
+        Get.put(UserController(firebaseService));
       }),
       home: RegisterScreen(),
       getPages: [

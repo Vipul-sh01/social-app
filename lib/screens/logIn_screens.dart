@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 import '../controllers/user_controllers.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -10,12 +18,37 @@ class RegisterScreen extends StatelessWidget {
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _maritalStatusController = TextEditingController();
-  final TextEditingController _profilePictureUrlController = TextEditingController();
+
+  final UserController userController = Get.find<UserController>();
+  File? _selectedImage;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<String?> _uploadImage(File image) async {
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child('${_emailController.text}.jpg');
+      await storageRef.putFile(image);
+      return await storageRef.getDownloadURL();
+    } catch (e) {
+      print('Image upload error: $e');
+      return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final UserController userController = Get.find<UserController>();
-
     return Scaffold(
       appBar: AppBar(title: Text('Register')),
       body: Obx(() {
@@ -24,6 +57,19 @@ class RegisterScreen extends StatelessWidget {
           child: SingleChildScrollView(
             child: Column(
               children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundImage: _selectedImage != null
+                        ? FileImage(_selectedImage!)
+                        : null,
+                    child: _selectedImage == null
+                        ? Icon(Icons.person, size: 50)
+                        : null,
+                  ),
+                ),
+                SizedBox(height: 20),
                 TextField(
                   controller: _fullNameController,
                   decoration: InputDecoration(labelText: 'Full Name'),
@@ -54,21 +100,21 @@ class RegisterScreen extends StatelessWidget {
                   controller: _maritalStatusController,
                   decoration: InputDecoration(labelText: 'Marital Status'),
                 ),
-                // TextField(
-                //   controller: _profilePictureUrlController,
-                //   decoration: InputDecoration(labelText: 'Profile Picture URL'),
-                // ),
                 SizedBox(height: 20),
                 userController.isLoading.value
                     ? CircularProgressIndicator()
                     : ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    String? profilePictureUrl;
+                    if (_selectedImage != null) {
+                      profilePictureUrl = await _uploadImage(_selectedImage!);
+                    }
                     userController.registerUser(
-                      _fullNameController.text,
-                      _emailController.text,
-                      _passwordController.text,
-                      // profilePictureUrl: _profilePictureUrlController.text,
-                      age: int.tryParse(_ageController.text),
+                      fullName: _fullNameController.text,
+                      email: _emailController.text,
+                      password: _passwordController.text,
+                      profilePictureUrl: profilePictureUrl ?? '',
+                      age: int.tryParse(_ageController.text) ?? 0,
                       gender: _genderController.text,
                       bio: _bioController.text,
                       maritalStatus: _maritalStatusController.text,

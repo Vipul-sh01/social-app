@@ -1,62 +1,74 @@
-import 'package:app/utility/ApiError.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import 'package:get/get.dart';
 import '../models/user_models.dart';
+import '../services/Userservice.dart';
 import '../utility/ApiResponce.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../utility/ApiError.dart';
 
 class UserController extends GetxController {
-  final UserModel _userModel = UserModel();
+  final FirebaseService _firebaseService;
+
+  UserController(this._firebaseService);
+
   var isLoading = false.obs;
   var errorMessage = ''.obs;
+  var selectedImage = Rx<File?>(null);
 
-  Future<ApiResponse> registerUser(
-      String fullName,
-      String email,
-      String password, {
-        String? profilePictureUrl,
-        int? age,
-        String? gender,
-        String? bio,
-        String? maritalStatus,
-      }) async {
-    isLoading.value = true;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    final userRef = firestore.collection('users').doc(email);
-
+  Future<void> pickImage() async {
     try {
+      selectedImage.value = await _firebaseService.pickImage();
+    } catch (e) {
+      errorMessage.value = "Image selection failed: ${e.toString()}";
+    }
+  }
+
+  Future<ApiResponse> registerUser({
+    required String fullName,
+    required String email,
+    required String password,
+    String? gender,
+    int? age,
+    String? bio,
+    String? maritalStatus,
+    required String? profilePictureUrl,
+  }) async {
+    isLoading.value = true;
+    try {
+      // Validate inputs
       if ([fullName, email, password].any((field) => field.trim().isEmpty)) {
         throw ApiError(statusCode: 400, message: "All fields are required");
       }
 
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      // Register user with FirebaseAuth
+      String userId = await _firebaseService.registerWithEmail(email, password);
 
-      final userData = {
-        'fullName': fullName,
-        'email': email,
-        'profilePictureUrl': profilePictureUrl,
-        'age': age,
-        'gender': gender,
-        'bio': bio,
-        'maritalStatus': maritalStatus,
-      };
-      print(userData);
-      await userRef.set(userData);
+      // Upload profile image if selected
+      String? profilePictureUrl;
+      if (selectedImage.value != null) {
+        profilePictureUrl = await _firebaseService.uploadProfileImage(selectedImage.value!, userId);
+      }
+
+      // Create a user model and save data to Firestore
+      UserModel userModel = UserModel(
+        fullName: fullName,
+        email: email,
+        profilePictureUrl: profilePictureUrl,
+        age: age,
+        gender: gender,
+        bio: bio,
+        maritalStatus: maritalStatus,
+      );
+      await _firebaseService.saveUserData(userModel, userId);
 
       return ApiResponse(
         statusCode: 201,
         message: 'User registered successfully',
-        data: userCredential.user,
+        data: null,
       );
     } catch (e) {
       final apiError = e is ApiError
           ? e
           : ApiError(statusCode: 500, message: e.toString());
-
       errorMessage.value = apiError.message;
       return ApiResponse(
         statusCode: apiError.statusCode,
@@ -70,9 +82,8 @@ class UserController extends GetxController {
 
   Future<void> logoutUser() async {
     isLoading.value = true;
-
     try {
-      await FirebaseAuth.instance.signOut();
+      await _firebaseService.logout();
       Get.offAllNamed('/login');
     } catch (e) {
       errorMessage.value = 'Logout failed: ${e.toString()}';
