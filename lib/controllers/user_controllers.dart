@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:get/get.dart';
+import 'package:http/http.dart';
 import '../models/user_models.dart';
-import '../services/Userservice.dart';
+import '../services/user_service.dart';
 import '../utility/ApiResponce.dart';
 import '../utility/ApiError.dart';
 
@@ -59,6 +60,7 @@ class UserController extends GetxController {
         maritalStatus: maritalStatus,
       );
       await _firebaseService.saveUserData(userModel, userId);
+      Get.toNamed('/home');
 
       return ApiResponse(
         statusCode: 201,
