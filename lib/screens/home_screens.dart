@@ -1,6 +1,17 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'chat_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -10,8 +21,8 @@ class HomeScreen extends StatelessWidget {
             const DecoratedBox(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage("images/bg3.jpg"), // Corrected path
-                  // Ensure the image fits the container
+                  image: AssetImage("images/bg3.jpg"),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -19,29 +30,46 @@ class HomeScreen extends StatelessWidget {
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        shape: CircularNotchedRectangle(), // Use CircularNotchedRectangle or any other shape
+        shape: const CircularNotchedRectangle(),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-              icon: Icon(Icons.home),
+              icon: const Icon(Icons.home),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.person),
+              icon: const Icon(Icons.person),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.search),
+              icon: const Icon(Icons.search),
               onPressed: () {},
             ),
             IconButton(
-              icon: Icon(Icons.messenger_outline_outlined),
-              onPressed: () {},
+              icon: const Icon(Icons.messenger_outline_outlined),
+              onPressed: () async {
+                try {
+                  final User? user = _auth.currentUser;
+                  if (user != null) {
+                    // print("Current user: ${user.uid}");
+                    Get.to(() => ChatScreen());
+                  }
+                } catch (e) {
+                  print(e);
+                }
+              },
             ),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Add your floating action button action here
+        },
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }

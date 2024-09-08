@@ -1,3 +1,4 @@
+import 'package:app/screens/chat_screen.dart';
 import 'package:app/screens/home_screens.dart';
 import 'package:app/screens/login_screen.dart';
 import 'package:app/screens/register_screen.dart';
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/', page: () =>LoginScreen()),
         GetPage(name: '/register', page: () =>RegisterScreen()),
         GetPage(name: '/home', page: () => HomeScreen()),
+        GetPage(name: '/chat', page: () => ChatScreen()),
       ],
     );
   }

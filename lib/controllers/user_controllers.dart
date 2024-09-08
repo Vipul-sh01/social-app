@@ -21,7 +21,7 @@ class UserController extends GetxController {
       errorMessage.value = "Image selection failed: ${e.toString()}";
     }
   }
-  
+
   Future<ApiResponse> registerUser({
     required String fullName,
     required String email,
