@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:get/get.dart';
-import 'package:http/http.dart';
 import '../models/user_models.dart';
 import '../services/user_service.dart';
 import '../utility/ApiResponce.dart';
@@ -22,7 +21,7 @@ class UserController extends GetxController {
       errorMessage.value = "Image selection failed: ${e.toString()}";
     }
   }
-
+  
   Future<ApiResponse> registerUser({
     required String fullName,
     required String email,
@@ -31,28 +30,24 @@ class UserController extends GetxController {
     int? age,
     String? bio,
     String? maritalStatus,
-    required String? profilePictureUrl,
+    String? profilePictureUrl,
   }) async {
     isLoading.value = true;
     try {
-      // Validate inputs
       if ([fullName, email, password].any((field) => field.trim().isEmpty)) {
         throw ApiError(statusCode: 400, message: "All fields are required");
       }
 
-      // Register user with FirebaseAuth
       String userId = await _firebaseService.registerWithEmail(email, password);
 
-      // Upload profile image if selected
-      String? profilePictureUrl;
       if (selectedImage.value != null) {
         profilePictureUrl = await _firebaseService.uploadProfileImage(selectedImage.value!, userId);
       }
 
-      // Create a user model and save data to Firestore
       UserModel userModel = UserModel(
         fullName: fullName,
         email: email,
+        password: password,
         profilePictureUrl: profilePictureUrl,
         age: age,
         gender: gender,
@@ -66,6 +61,40 @@ class UserController extends GetxController {
         statusCode: 201,
         message: 'User registered successfully',
         data: null,
+      );
+    } catch (e) {
+      final apiError = e is ApiError
+          ? e
+          : ApiError(statusCode: 500, message: e.toString());
+      errorMessage.value = apiError.message;
+      return ApiResponse(
+        statusCode: apiError.statusCode,
+        message: apiError.message,
+        data: null,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    isLoading.value = true;
+    try {
+      if (email.trim().isEmpty || password.trim().isEmpty) {
+        throw ApiError(statusCode: 400, message: "Email and password are required");
+      }
+
+      String userId = await _firebaseService.loginWithEmail(email, password);
+
+      Get.toNamed('/home');
+
+      return ApiResponse(
+        statusCode: 200,
+        message: 'Login successful',
+        data: userId,
       );
     } catch (e) {
       final apiError = e is ApiError

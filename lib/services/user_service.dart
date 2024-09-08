@@ -35,6 +35,18 @@ class FirebaseService {
     await userRef.set(user.toJson());
   }
 
+  Future<String> loginWithEmail(String email, String password) async {
+    try {
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      return userCredential.user!.uid;
+    } catch (e) {
+      throw Exception("Login failed: ${e.toString()}");
+    }
+  }
+
   Future<void> logout() async {
     await _auth.signOut();
   }

@@ -1,6 +1,7 @@
 class UserModel {
   final String fullName;
   final String email;
+  final String password;
   final String? profilePictureUrl;
   final int? age;
   final String? gender;
@@ -10,6 +11,7 @@ class UserModel {
   UserModel({
     required this.fullName,
     required this.email,
+    required this.password,
     this.profilePictureUrl,
     this.age,
     this.gender,
