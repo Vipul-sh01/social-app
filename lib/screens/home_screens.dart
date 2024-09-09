@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'Profile_screen.dart';
 import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -40,7 +40,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.person),
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  final User? user = _auth.currentUser;
+                  if (user != null) {
+                    Get.to(() => ProfileScreen());
+                  } else {
+                    print("User is not logged in");
+                  }
+                } catch (e) {
+                  print("Error navigating to Profile: $e");
+                }
+              },
             ),
             IconButton(
               icon: const Icon(Icons.search),
@@ -52,11 +63,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 try {
                   final User? user = _auth.currentUser;
                   if (user != null) {
-                    // print("Current user: ${user.uid}");
-                    Get.to(() => ChatScreen());
+                    String chatId = "ChatId"; // Replace with the actual chat ID
+                    Get.to(() => ChatScreen(chatId));
+                  } else {
+                    print("User is not logged in");
                   }
                 } catch (e) {
-                  print(e);
+                  print("Error navigating to ChatScreen: $e");
                 }
               },
             ),

@@ -8,11 +8,13 @@ import '../utility/ApiError.dart';
 class UserController extends GetxController {
   final FirebaseService _firebaseService;
 
-  UserController(this._firebaseService);
-
+  // Reactive variables
+  var selectedImage = Rx<File?>(null);
   var isLoading = false.obs;
   var errorMessage = ''.obs;
-  var selectedImage = Rx<File?>(null);
+
+  // Constructor
+  UserController(this._firebaseService);
 
   Future<void> pickImage() async {
     try {
@@ -88,9 +90,7 @@ class UserController extends GetxController {
       }
 
       String userId = await _firebaseService.loginWithEmail(email, password);
-
       Get.toNamed('/home');
-
       return ApiResponse(
         statusCode: 200,
         message: 'Login successful',

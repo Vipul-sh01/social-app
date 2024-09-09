@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-import '../models/user_models.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+
+import '../models/user_models.dart';
 
 class FirebaseService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -30,10 +31,17 @@ class FirebaseService {
     return await storageRef.getDownloadURL();
   }
 
-  Future<void> saveUserData(UserModel user, String userId) async {
-    final userRef = _firestore.collection('users').doc(userId);
-    await userRef.set(user.toJson());
+  Future<void> saveUserData(UserModel userModel, String userId) async {
+    try {
+      await _firestore.collection('users').doc(userId).set(userModel.toJson());
+      print('User data successfully written to Firestore');
+    } catch (e) {
+      print('Failed to write user data: ${e.toString()}');
+      throw Exception('Error writing user data');
+    }
+
   }
+
 
   Future<String> loginWithEmail(String email, String password) async {
     try {
@@ -46,6 +54,8 @@ class FirebaseService {
       throw Exception("Login failed: ${e.toString()}");
     }
   }
+
+
 
   Future<void> logout() async {
     await _auth.signOut();
