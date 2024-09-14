@@ -11,6 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'controllers/chat_controller.dart';
 import 'controllers/getdata_controller.dart';
 import 'controllers/user_controllers.dart';
+import 'models/chat_Models.dart';
 
 
 void main() async {
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/register', page: () =>RegisterScreen()),
         GetPage(name: '/home', page: () => HomeScreen()),
         GetPage(name: '/profile', page: () => ProfileScreen()),
+        // GetPage(name: '/chatroom', page: () => ChatRoom()),
         // GetPage(name: '/editProfile', page: () => EditProfileScreen()),
         GetPage(name: '/chat', page: () => ChatScreen(Get.parameters['chatId']!)),
       ],

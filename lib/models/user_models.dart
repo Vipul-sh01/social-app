@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   String? fullName;
   String? email;
@@ -19,6 +21,15 @@ class UserModel {
     this.maritalStatus,
   });
 
+  factory UserModel.fromDocumentSnapshot(DocumentSnapshot doc) {
+    return UserModel(
+      // id: doc.id,
+      email: doc['email'],
+      fullName: doc['fullName'],
+      profilePictureUrl: doc['profilePictureUrl'],
+    );
+  }
+
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
       fullName: map['fullName'] as String?,
@@ -30,6 +41,19 @@ class UserModel {
       bio: map['bio'] as String?,
       maritalStatus: map['maritalStatus'] as String?,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'fullName': fullName,
+      'email': email,
+      'password': password, // You should hash the password before saving
+      'profilePictureUrl': profilePictureUrl,
+      'age': age,
+      'gender': gender,
+      'bio': bio,
+      'maritalStatus': maritalStatus,
+    };
   }
 
   Map<String, dynamic> toJson() {

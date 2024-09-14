@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/chat_controller.dart';
 import '../controllers/getdata_controller.dart';
+import '../models/ChatMessage.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
@@ -13,6 +15,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   late final ChatController _chatController;
   late final GetDataController userController;
   final TextEditingController messageController = TextEditingController();
@@ -24,6 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _chatController = Get.find<ChatController>();
     userController = Get.find<GetDataController>();
 
+    // Start listening to messages and user data
     _chatController.listenToMessages(widget.chatId);
     userController.fetchUserData();
   }
@@ -36,22 +40,12 @@ class _ChatScreenState extends State<ChatScreen> {
           var userData = userController.user.value;
           return Text(
             userData?.fullName ?? 'Loading...',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           );
         }),
       ),
       body: Stack(
         children: [
-          // Background image
-          Container(
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/background_image.png'), // Change to your image path
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          // Chat content on top of the background image
           Column(
             children: [
               Expanded(
@@ -61,30 +55,42 @@ class _ChatScreenState extends State<ChatScreen> {
                     reverse: true,
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      var message = messages[index];
-                      bool isSentByMe = message['senderId'] == _chatController.currentUser;
+                      ChatMessage message = messages[index];
+                      bool isSentByMe = message.sender == _auth.currentUser?.email; // Compare sender with current user's email
 
                       return Align(
-                        alignment: isSentByMe ? Alignment.centerLeft : Alignment.centerRight,
+                        alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
                         child: Container(
-                          margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                          padding: EdgeInsets.symmetric(vertical: 0, horizontal: 10),
+                          margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
-                            color: isSentByMe ? Colors.white70 : Colors.blueAccent,
+                            color: isSentByMe ? Colors.blueAccent : Colors.white70,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                message['senderName'] ?? '',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              Text(
-                                message['message'] ?? '',
+                                message.sender,
                                 style: TextStyle(
-                                  color: isSentByMe ? Colors.blueAccent : Colors.white,
-                                  fontWeight: isSentByMe ? FontWeight.bold : FontWeight.normal,
+                                  fontWeight: FontWeight.bold,
+                                  color: isSentByMe ? Colors.white : Colors.blueAccent,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                message.content,
+                                style: TextStyle(
+                                  color: isSentByMe ? Colors.white : Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                // Format timestamp for readability
+                                "${message.timestamp.hour}:${message.timestamp.minute}",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: isSentByMe ? Colors.white54 : Colors.black54,
                                 ),
                               ),
                             ],
@@ -110,13 +116,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     IconButton(
-                      icon: Icon(Icons.send),
+                      icon: const Icon(Icons.send),
                       onPressed: () {
-                        if (messageController.text.isNotEmpty) {
-                          _chatController.sendMessage(widget.chatId, messageController.text);
-                          messageController.clear();
+                        if (_auth.currentUser != null && messageController.text.isNotEmpty) {
+                          _chatController.sendMessage(widget.chatId, messageController.text, messageController);
                         }
                       },
                     ),

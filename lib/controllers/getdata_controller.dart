@@ -13,7 +13,6 @@ class GetDataController extends GetxController {
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxString errorMessage = ''.obs;
   final RxList<String> profilePictureUrl = <String>[].obs;
-  // var userData = {}.obs;
 
   @override
   void onInit() {
@@ -27,8 +26,8 @@ class GetDataController extends GetxController {
       QuerySnapshot snapshot = await _firestore.collection('users').get();
       profilePictureUrl.value = snapshot.docs
           .map((doc) => (doc.data() as Map<String, dynamic>)['profilePictureUrl'] as String?)
-          .where((url) => url != null) // Ensure URLs are non-null
-          .cast<String>() // Safely cast non-null URLs back to String
+          .where((url) => url != null)
+          .cast<String>()
           .toList();
     } catch (e) {
       Get.snackbar('Error', 'Failed to retrieve images');
@@ -60,6 +59,34 @@ class GetDataController extends GetxController {
     } catch (e) {
       showError('Failed to retrieve user');
       errorMessage.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> getCurrentUser() async {
+    try {
+      isLoading.value = true;
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        String userId = currentUser.uid;
+        DocumentSnapshot docSnapshot = await _firestore.collection('users').doc(userId).get();
+
+        if (docSnapshot.exists) {
+          final data = docSnapshot.data() as Map<String, dynamic>?;
+          if (data != null) {
+            user.value = UserModel.fromMap(data);
+          } else {
+            Get.toNamed('/login');
+          }
+        } else {
+          Get.toNamed('/login');
+        }
+      } else {
+        Get.toNamed('/login');
+      }
+    } catch (e) {
+      errorMessage.value = "Failed to load user data: ${e.toString()}";
     } finally {
       isLoading.value = false;
     }

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 import '../models/user_models.dart';
 import '../services/user_service.dart';
@@ -36,27 +37,35 @@ class UserController extends GetxController {
   }) async {
     isLoading.value = true;
     try {
+      // Validate required fields
       if ([fullName, email, password].any((field) => field.trim().isEmpty)) {
         throw ApiError(statusCode: 400, message: "All fields are required");
       }
 
+      // Register user with email and password
       String userId = await _firebaseService.registerWithEmail(email, password);
 
+      // Upload profile picture if selected
       if (selectedImage.value != null) {
         profilePictureUrl = await _firebaseService.uploadProfileImage(selectedImage.value!, userId);
       }
 
+      // Create user model
       UserModel userModel = UserModel(
         fullName: fullName,
         email: email,
-        password: password,
+        password: password,  // Consider hashing the password before saving
         profilePictureUrl: profilePictureUrl,
         age: age,
         gender: gender,
         bio: bio,
         maritalStatus: maritalStatus,
       );
+
+      // Save user data to Firestore under 'users' collection
       await _firebaseService.saveUserData(userModel, userId);
+
+      // Navigate to home screen after successful registration
       Get.toNamed('/home');
 
       return ApiResponse(

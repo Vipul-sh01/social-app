@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 try {
                   final User? user = _auth.currentUser;
                   if (user != null) {
-                    String chatId = "ChatId"; // Replace with the actual chat ID
+                    String chatId = "ChatId";
                     Get.to(() => ChatScreen(chatId));
                   } else {
                     print("User is not logged in");
