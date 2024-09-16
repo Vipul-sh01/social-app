@@ -47,6 +47,7 @@ class FirebaseService {
 
   Future<void> saveUserData(UserModel userModel, String userId) async {
     try {
+      // await _firestore.collection('users').doc(userId).collection('user').doc('userData').set(userModel.toJson());
       await _firestore.collection('users').doc(userId).set(userModel.toJson());
       print('User data successfully written to Firestore');
     } catch (e) {

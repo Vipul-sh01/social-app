@@ -9,6 +9,9 @@ class UserModel {
   String? gender;
   String? bio;
   String? maritalStatus;
+  List<String> friends;
+  List<String> friendRequests;
+  List<String> sentRequests;
 
   UserModel({
     this.fullName,
@@ -19,14 +22,22 @@ class UserModel {
     this.gender,
     this.bio,
     this.maritalStatus,
+    this.friends = const [],
+    this.friendRequests = const [],
+    this.sentRequests = const [],
   });
 
   factory UserModel.fromDocumentSnapshot(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>?;
+
     return UserModel(
-      // id: doc.id,
-      email: doc['email'],
-      fullName: doc['fullName'],
-      profilePictureUrl: doc['profilePictureUrl'],
+      email: data?['email'] as String?,
+      fullName: data?['fullName'] as String?,
+      profilePictureUrl: data?['profilePictureUrl'] as String?,
+      friends: List<String>.from(data?['friends'] ?? []),
+      friendRequests: List<String>.from(data?['friendRequests'] ?? []),
+      sentRequests: List<String>.from(data?['sentRequests'] ?? []),
+      // Note: Add default values or handle missing fields accordingly
     );
   }
 
@@ -40,6 +51,9 @@ class UserModel {
       gender: map['gender'] as String?,
       bio: map['bio'] as String?,
       maritalStatus: map['maritalStatus'] as String?,
+      friends: List<String>.from(map['friends'] ?? []),
+      friendRequests: List<String>.from(map['friendRequests'] ?? []),
+      sentRequests: List<String>.from(map['sentRequests'] ?? []),
     );
   }
 
@@ -53,19 +67,13 @@ class UserModel {
       'gender': gender,
       'bio': bio,
       'maritalStatus': maritalStatus,
+      'friends': friends,
+      'friendRequests': friendRequests,
+      'sentRequests': sentRequests,
     };
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'fullName': fullName,
-      'email': email,
-      'password': password,
-      'profilePictureUrl': profilePictureUrl,
-      'age': age,
-      'gender': gender,
-      'bio': bio,
-      'maritalStatus': maritalStatus,
-    };
+    return toMap(); // If both methods are supposed to be the same, you can use the same implementation
   }
 }

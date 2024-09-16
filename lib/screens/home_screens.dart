@@ -1,8 +1,10 @@
+import 'package:app/screens/chat_room_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'Profile_screen.dart';
-import 'chat_screen.dart';
+
+
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -63,8 +65,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 try {
                   final User? user = _auth.currentUser;
                   if (user != null) {
-                    String chatId = "ChatId";
-                    Get.to(() => ChatScreen(chatId));
+                    String roomId = "roomId";
+                    Get.to(()=> ChatScreenRoom(roomId: roomId));
                   } else {
                     print("User is not logged in");
                   }

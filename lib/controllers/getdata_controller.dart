@@ -9,6 +9,7 @@ class GetDataController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final Rx<UserModel?> user = Rx<UserModel?>(null);
+  final RxList<UserModel> users = <UserModel>[].obs;
   final RxBool isLoading = false.obs;
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxString errorMessage = ''.obs;
@@ -18,7 +19,22 @@ class GetDataController extends GetxController {
   void onInit() {
     super.onInit();
     fetchUserData();
+    fetchUsers();
     fetchImages();
+  }
+
+  Future<void> fetchUsers() async {
+    isLoading.value = true;
+    try {
+      QuerySnapshot snapshot = await _firestore.collection('users').get();
+      users.value = snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      errorMessage.value = "Error fetching users: ${e.toString()}";
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<void> fetchImages() async {

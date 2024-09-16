@@ -8,8 +8,17 @@ class ChatRoomController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    // fetchUsers();
 
   }
+
+  // void fetchUsers() async {
+  //   // Simulate network delay
+  //   await Future.delayed(Duration(seconds: 2));
+  //
+  //   // Update the users list
+  //   users.value = fetchedUsers;
+  // }
 
   // Method to add a user
   void addUser(User user) {
@@ -23,3 +32,5 @@ class ChatRoomController extends GetxController {
 
 // Add other methods to manage users if needed
 }
+
+

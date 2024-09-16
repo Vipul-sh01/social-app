@@ -17,7 +17,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _maritalStatusController = TextEditingController();
+  final TextEditingController _maritalStatusController =
+      TextEditingController();
 
   final UserController userController = Get.find<UserController>();
   File? _selectedImage;
@@ -104,24 +105,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 userController.isLoading.value
                     ? CircularProgressIndicator()
                     : ElevatedButton(
-                  onPressed: () async {
-                    String? profilePictureUrl;
-                    if (_selectedImage != null) {
-                      profilePictureUrl = await _uploadImage(_selectedImage!);
-                    }
-                    userController.registerUser(
-                      fullName: _fullNameController.text,
-                      email: _emailController.text,
-                      password: _passwordController.text,
-                      profilePictureUrl: profilePictureUrl ?? '',
-                      age: int.tryParse(_ageController.text) ?? 0,
-                      gender: _genderController.text,
-                      bio: _bioController.text,
-                      maritalStatus: _maritalStatusController.text,
-                    );
-                  },
-                  child: Text('Register'),
-                ),
+                        onPressed: () async {
+                          String? profilePictureUrl;
+                          if (_selectedImage != null) {
+                            profilePictureUrl =
+                                await _uploadImage(_selectedImage!);
+                          }
+                          userController.registerUser(
+                            fullName: _fullNameController.text,
+                            email: _emailController.text,
+                            password: _passwordController.text,
+                            profilePictureUrl: profilePictureUrl ?? '',
+                            age: int.tryParse(_ageController.text) ?? 0,
+                            gender: _genderController.text,
+                            bio: _bioController.text,
+                            maritalStatus: _maritalStatusController.text,
+                          );
+                        },
+                        child: Text('Register'),
+                      ),
                 if (userController.errorMessage.value.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
