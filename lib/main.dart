@@ -1,4 +1,6 @@
 import 'package:app/screens/Profile_screen.dart';
+import 'package:app/screens/User_List_Screen.dart';
+import 'package:app/screens/User_accept_Screen.dart';
 import 'package:app/screens/chat_room_screen.dart';
 import 'package:app/screens/chat_screen.dart';
 import 'package:app/screens/editProfile_sceen.dart';
@@ -43,10 +45,13 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/register', page: () => RegisterScreen()),
         GetPage(name: '/home', page: () => HomeScreen()),
         GetPage(name: '/profile', page: () => ProfileScreen()),
-        GetPage(name: '/chatroom', page: () => ChatScreenRoom(roomId: Get.parameters['roomId']!,)),
+        GetPage(name: '/search', page: () => UserListScreen()),
+        GetPage(name: '/accept', page: () => FriendRequestScreen()),
+        GetPage(name: '/chatroom', page: () => ChatRoomPage(roomId: Get.parameters['roomId']!,)),
         // GetPage(name: '/editProfile', page: () => EditProfileScreen()),
         GetPage(name: '/chat', page: () => ChatScreen(Get.parameters['chatId']!)),
       ],
     );
   }
 }
+

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'Profile_screen.dart';
+import 'User_List_Screen.dart';
+import 'User_accept_Screen.dart';
 
 
 
@@ -38,7 +40,18 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.home),
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  final User? user = _auth.currentUser;
+                  if (user != null) {
+                    Get.to(() => FriendRequestScreen());
+                  } else {
+                    print("User is not logged in");
+                  }
+                } catch (e) {
+                  print("Error navigating to Profile: $e");
+                }
+              },
             ),
             IconButton(
               icon: const Icon(Icons.person),
@@ -57,7 +70,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: const Icon(Icons.search),
-              onPressed: () {},
+              onPressed: () async {
+                try {
+                  final User? user = _auth.currentUser;
+                  if (user != null) {
+                    Get.to(() => UserListScreen());
+                  } else {
+                    print("User is not logged in");
+                  }
+                } catch (e) {
+                  print("Error navigating to Profile: $e");
+                }
+              },
             ),
             IconButton(
               icon: const Icon(Icons.messenger_outline_outlined),
@@ -66,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   final User? user = _auth.currentUser;
                   if (user != null) {
                     String roomId = "roomId";
-                    Get.to(()=> ChatScreenRoom(roomId: roomId));
+                    Get.to(()=> ChatRoomPage(roomId: roomId));
                   } else {
                     print("User is not logged in");
                   }

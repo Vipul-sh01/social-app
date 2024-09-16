@@ -1,78 +1,58 @@
-import 'package:app/screens/chat_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../controllers/getdata_controller.dart';
+import '../controllers/chat_controller.dart';
+import '../models/chat_Models.dart'; // Make sure this path is correct
 
-class ChatScreenRoom extends StatefulWidget {
+class ChatRoomPage extends StatefulWidget {
   final String roomId;
-  ChatScreenRoom({required this.roomId});
+  ChatRoomPage({required this.roomId}); // Updated the constructor name
 
   @override
-  State<ChatScreenRoom> createState() => _ChatScreenRoomState();
+  State<ChatRoomPage> createState() => _ChatRoomPageState();
 }
 
-class _ChatScreenRoomState extends State<ChatScreenRoom> {
-  final GetDataController userController = Get.put(GetDataController());
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class _ChatRoomPageState extends State<ChatRoomPage> {
+  final ChatController chatController = Get.put(ChatController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chat Room"),
+        title: Text('Chat Room'),
       ),
       body: Obx(() {
-        // Show loading indicator if data is still being fetched or not available
-        if (userController.isLoading.value) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        if (userController.errorMessage.isNotEmpty) {
-          return Center(child: Text(userController.errorMessage.value));
-        }
-
-        if (userController.user.value != null) {
-          var user = userController.user.value!;
-
-          return ListView(
-            children: [
-              ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: userController.selectedImage.value != null
-                      ? FileImage(userController.selectedImage.value!)
-                      : userController.profilePictureUrl.isNotEmpty
-                      ? NetworkImage(userController.profilePictureUrl.first)
-                      : AssetImage('assets/default_profile.png')
-                  as ImageProvider,
+        if (chatController.chatRooms.isEmpty) {
+          return Center(child: Text('No chat rooms available'));
+        } else {
+          return ListView.builder(
+            itemCount: chatController.chatRooms.length,
+            itemBuilder: (context, index) {
+              final chatRoom = chatController.chatRooms[index];
+              return ListTile(
+                title: Text(chatRoom.roomId),
+                subtitle: Text('Participants: ${chatRoom.participants.join(", ")}'),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => chatController.deleteChatRoom(chatRoom.roomId),
                 ),
-                title: Text(
-                  'Name: ${user.fullName}',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                onTap: () async {
-                  // Handle user tap (open chat, etc.)
-                  try {
-                    final User? currentUser = _auth.currentUser;
-                    if (currentUser != null) {
-                      // Navigate to the ChatScreen passing the actual chatId
-                      String chatId = "chatId";
-                      Get.to(() => ChatScreen(chatId));
-                    } else {
-                      print("User is not logged in");
-                    }
-                  } catch (e) {
-                    print("Error navigating to ChatScreen: $e");
-                  }
-                },
-              ),
-            ],
+              );
+            },
           );
         }
-
-        // Return an empty container or placeholder if no user data
-        return Center(child: Text("No user data available"));
       }),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // Add new chat room logic here
+          ChatRoom newChatRoom = ChatRoom(
+            roomId: 'room_${DateTime.now().millisecondsSinceEpoch}',
+            participants: ['user1', 'user2'],
+            createdAt: Timestamp.now(),
+          );
+          chatController.addChatRoom(newChatRoom);
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 }

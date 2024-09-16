@@ -56,7 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       ChatMessage message = messages[index];
-                      bool isSentByMe = message.sender == _auth.currentUser?.email; // Compare sender with current user's email
+                      bool isSentByMe = message.sender == _auth.currentUser?.email;
 
                       return Align(
                         alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -86,7 +86,6 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                // Format timestamp for readability
                                 "${message.timestamp.hour}:${message.timestamp.minute}",
                                 style: TextStyle(
                                   fontSize: 12,
@@ -121,6 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       icon: const Icon(Icons.send),
                       onPressed: () {
                         if (_auth.currentUser != null && messageController.text.isNotEmpty) {
+                          // Pass required arguments to sendMessage
                           _chatController.sendMessage(widget.chatId, messageController.text, messageController);
                         }
                       },
