@@ -11,6 +11,26 @@ class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  User? getCurrentUser() {
+    return _auth.currentUser;
+  }
+
+  Future<DocumentSnapshot> getUserData(String userId) async {
+    try {
+      return await _firestore.collection('users').doc(userId).get();
+    } catch (e) {
+      throw Exception('Failed to fetch user data: ${e.toString()}');
+    }
+  }
+
+  Future<void> updateUserData(String userId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('users').doc(userId).update(data);
+    } catch (e) {
+      throw Exception('Failed to update user data: ${e.toString()}');
+    }
+  }
+
   // Register user with email and password
   Future<String> registerWithEmail(String email, String password) async {
     try {
@@ -20,7 +40,7 @@ class FirebaseService {
       );
       return userCredential.user!.uid;
     } catch (e) {
-      print('Failed to register: ${e.toString()}');
+      Get.snackbar("Registration Failed", e.toString());
       throw Exception('Registration failed');
     }
   }
@@ -30,10 +50,13 @@ class FirebaseService {
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      return pickedFile != null ? File(pickedFile.path) : null;
+      if (pickedFile == null) {
+        throw Exception("No image selected");
+      }
+      return File(pickedFile.path);
     } catch (e) {
-      print('Failed to pick image: ${e.toString()}');
-      throw Exception('Image picking failed');
+      Get.snackbar("Error", "Failed to pick image: $e");
+      return null;
     }
   }
 
@@ -44,7 +67,7 @@ class FirebaseService {
       await storageRef.putFile(image);
       return await storageRef.getDownloadURL();
     } catch (e) {
-      print('Failed to upload profile image: ${e.toString()}');
+      Get.snackbar("Upload Failed", "Failed to upload profile image: $e");
       throw Exception('Profile image upload failed');
     }
   }
@@ -53,9 +76,9 @@ class FirebaseService {
   Future<void> saveUserData(UserModel userModel, String userId) async {
     try {
       await _firestore.collection('users').doc(userId).set(userModel.toJson());
-      print('User data successfully written to Firestore');
+      Get.snackbar("Success", "User data successfully saved.");
     } catch (e) {
-      print('Failed to write user data: ${e.toString()}');
+      Get.snackbar("Error", "Failed to save user data: $e");
       throw Exception('Error writing user data');
     }
   }
@@ -69,7 +92,7 @@ class FirebaseService {
       );
       return userCredential.user!.uid;
     } catch (e) {
-      print('Login failed: ${e.toString()}');
+      Get.snackbar("Login Failed", e.toString());
       throw Exception('Login failed');
     }
   }
@@ -89,6 +112,7 @@ class FirebaseService {
           }
         }
       });
+      Get.snackbar("Success", "Friend request sent.");
     } catch (e) {
       Get.snackbar("Error", "Failed to send friend request: $e");
     }
@@ -122,6 +146,7 @@ class FirebaseService {
           }
         }
       });
+      Get.snackbar("Success", "Friend request accepted.");
     } catch (e) {
       Get.snackbar("Error", "Failed to accept friend request: $e");
     }
@@ -131,8 +156,9 @@ class FirebaseService {
   Future<void> logout() async {
     try {
       await _auth.signOut();
+      Get.snackbar("Success", "Logged out successfully.");
     } catch (e) {
-      print('Logout failed: ${e.toString()}');
+      Get.snackbar("Error", "Logout failed: $e");
       throw Exception('Logout failed');
     }
   }

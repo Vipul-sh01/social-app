@@ -17,11 +17,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
-  final TextEditingController _maritalStatusController =
-      TextEditingController();
 
   final UserController userController = Get.find<UserController>();
   File? _selectedImage;
+  String _selectedMaritalStatus = 'Single';
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -78,6 +77,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextField(
                   controller: _emailController,
                   decoration: InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
                 ),
                 TextField(
                   controller: _passwordController,
@@ -97,8 +97,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _bioController,
                   decoration: InputDecoration(labelText: 'Bio'),
                 ),
-                TextField(
-                  controller: _maritalStatusController,
+                SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: _selectedMaritalStatus,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedMaritalStatus = value ?? 'Single';
+                    });
+                  },
+                  items: ['Single', 'Married', 'Divorced', 'Widowed']
+                      .map((status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          ))
+                      .toList(),
                   decoration: InputDecoration(labelText: 'Marital Status'),
                 ),
                 SizedBox(height: 20),
@@ -106,6 +118,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ? CircularProgressIndicator()
                     : ElevatedButton(
                         onPressed: () async {
+                          if (_emailController.text.isEmpty ||
+                              _passwordController.text.isEmpty ||
+                              _fullNameController.text.isEmpty) {
+                            Get.snackbar(
+                                'Error', 'Please fill all required fields');
+                            return;
+                          }
                           String? profilePictureUrl;
                           if (_selectedImage != null) {
                             profilePictureUrl =
@@ -119,7 +138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             age: int.tryParse(_ageController.text) ?? 0,
                             gender: _genderController.text,
                             bio: _bioController.text,
-                            maritalStatus: _maritalStatusController.text,
+                            maritalStatus: _selectedMaritalStatus,
                           );
                         },
                         child: Text('Register'),

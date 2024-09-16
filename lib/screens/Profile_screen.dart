@@ -1,10 +1,25 @@
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/getdata_controller.dart';
+import 'editProfile_sceen.dart';
 
-class ProfileScreen extends StatelessWidget {
-  final GetDataController userController = Get.put(GetDataController());
+class ProfileScreen extends StatefulWidget {
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final GetDataController userController = Get.find<GetDataController>();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    userController.fetchUserData();
+    userController.fetchImages();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +52,7 @@ class ProfileScreen extends StatelessWidget {
                       backgroundImage: userController.selectedImage.value != null
                           ? FileImage(userController.selectedImage.value!)
                           : userController.profilePictureUrl.isNotEmpty
-                          ? NetworkImage(userController.profilePictureUrl.first) 
+                          ? NetworkImage(userController.profilePictureUrl.first)
                           : AssetImage('assets/default_profile.png') as ImageProvider,
                     ),
                   ),
@@ -58,21 +73,26 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Bio: ${userData.bio}',
+                    'Bio: ${userData.bio ?? 'N/A'}',
                     style: TextStyle(fontSize: 16),
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Marital status: ${userData.maritalStatus}',
+                    'Marital status: ${userData.maritalStatus ?? 'N/A'}',
                     style: TextStyle(fontSize: 16),
                   ),
                   SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
                       onPressed: () {
-                        userController.fetchUserData();
+                        final User? user = _auth.currentUser;
+                        if (user != null) {
+                          Get.to(() => EditProfileScreen());
+                        } else {
+                          Get.snackbar('Error', 'User is not logged in');
+                        }
                       },
-                      child: Text('Refresh Data'),
+                      child: Text('Edit Profile'),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -89,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
                     return GridView.builder(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
-                      gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 10,
                         mainAxisSpacing: 10,

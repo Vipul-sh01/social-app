@@ -13,6 +13,7 @@ class UserController extends GetxController {
   var selectedImage = Rx<File?>(null);
   var isLoading = false.obs;
   var errorMessage = ''.obs;
+  var userModel = Rx<UserModel?>(null);  // Assuming you're using this to track the user model
 
   // Constructor
   UserController(this._firebaseService);
@@ -104,6 +105,74 @@ class UserController extends GetxController {
         statusCode: 200,
         message: 'Login successful',
         data: userId,
+      );
+    } catch (e) {
+      final apiError = e is ApiError
+          ? e
+          : ApiError(statusCode: 500, message: e.toString());
+      errorMessage.value = apiError.message;
+      return ApiResponse(
+        statusCode: apiError.statusCode,
+        message: apiError.message,
+        data: null,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> loadUserProfile() async {
+    isLoading.value = true;
+    try {
+      var user = await _firebaseService.getCurrentUser();  // Get the current user from FirebaseService
+      if (user != null) {
+        DocumentSnapshot userDoc = await _firebaseService.getUserData(user.uid);
+        userModel.value = UserModel.fromDocumentSnapshot(userDoc);
+      }
+    } catch (e) {
+      errorMessage.value = "Failed to load user profile: ${e.toString()}";
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<ApiResponse> updateProfile({
+    required String fullName,
+    String? bio,
+    String? gender,
+    String? maritalStatus,
+    File? profileImageFile, // Optional profile image file
+  }) async {
+    isLoading.value = true;
+    try {
+      var user = await _firebaseService.getCurrentUser();
+      if (user == null) throw ApiError(statusCode: 401, message: "User not logged in");
+
+      String? profilePictureUrl = userModel.value?.profilePictureUrl;
+
+      // Handle profile picture upload if a new image is selected
+      if (profileImageFile != null) {
+        profilePictureUrl = await _firebaseService.uploadProfileImage(profileImageFile, user.uid);
+      }
+
+      // Update the user model
+      userModel.value = UserModel(
+        fullName: fullName,
+        email: userModel.value?.email ?? '',  // Email remains unchanged here
+        bio: bio ?? userModel.value?.bio,
+        gender: gender ?? userModel.value?.gender,
+        maritalStatus: maritalStatus ?? userModel.value?.maritalStatus,
+        profilePictureUrl: profilePictureUrl,
+      );
+
+      // Update Firestore with the new user details
+      await _firebaseService.updateUserData(user.uid, userModel.value!.toMap());
+
+      // Return a success response
+      return ApiResponse(
+        statusCode: 200,
+        message: 'Profile updated successfully',
+        data: null,
       );
     } catch (e) {
       final apiError = e is ApiError
