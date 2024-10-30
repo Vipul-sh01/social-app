@@ -13,25 +13,49 @@ class GetDataController extends GetxController {
   final Rx<File?> selectedImage = Rx<File?>(null);
   final RxString errorMessage = ''.obs;
   final RxList<String> profilePictureUrl = <String>[].obs;
+  final RxList<String> friendsList = <String>[].obs;
+
 
   @override
   void onInit() {
     super.onInit();
     fetchUserData();
     fetchImages();
+    fetchFriends();
   }
 
   Future<void> fetchImages() async {
     try {
       QuerySnapshot snapshot = await _firestore.collection('users').get();
       profilePictureUrl.value = snapshot.docs
-          .map((doc) => (doc.data() as Map<String, dynamic>)['profilePictureUrl'] as String?)
+          .map((doc) => (doc.data() as Map<String, dynamic>?)?['profilePictureUrl'] as String?)
           .where((url) => url != null)
           .cast<String>()
           .toList();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to retrieve images');
-      errorMessage.value = 'Error retrieving images: ${e.toString()}';
+      showError('Failed to retrieve images: ${e.toString()}');
+    }
+  }
+
+  Future<void> fetchFriends() async {
+    isLoading.value = true;
+    try {
+      User? currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        DocumentSnapshot userDoc = await _firestore.collection('users').doc(currentUser.uid).get();
+        if (userDoc.exists) {
+          var userModel = UserModel.fromDocumentSnapshot(userDoc);
+          friendsList.value = userModel.friends; // Update friends list
+        } else {
+          showError('User document does not exist');
+        }
+      } else {
+        showError('No user is signed in');
+      }
+    } catch (e) {
+      showError("Failed to load friends: ${e.toString()}");
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -54,38 +78,10 @@ class GetDataController extends GetxController {
           showError('User document does not exist');
         }
       } else {
-        showError('No user is signed in');
+        Get.toNamed('/login'); // Redirect to login if no user
       }
     } catch (e) {
       showError('Failed to retrieve user data: ${e.toString()}');
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  Future<void> getCurrentUser() async {
-    isLoading.value = true;
-    try {
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        String userId = currentUser.uid;
-        DocumentSnapshot docSnapshot = await _firestore.collection('users').doc(userId).get();
-
-        if (docSnapshot.exists) {
-          final data = docSnapshot.data() as Map<String, dynamic>?;
-          if (data != null) {
-            user.value = UserModel.fromMap(data);
-          } else {
-            Get.toNamed('/login');
-          }
-        } else {
-          Get.toNamed('/login');
-        }
-      } else {
-        Get.toNamed('/login');
-      }
-    } catch (e) {
-      errorMessage.value = "Failed to load user data: ${e.toString()}";
     } finally {
       isLoading.value = false;
     }

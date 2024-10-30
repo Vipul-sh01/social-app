@@ -1,27 +1,39 @@
-import 'package:firebase_auth/firebase_auth.dart'; // Added FirebaseAuth import
-import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
+import '../constants/constants.dart';
+import '../constants/firebase_field_names.dart';
 import '../models/ChatMessage.dart';
-import '../models/chat_Models.dart';  // Assuming you have ChatRoom and ChatMessage models here
+import '../models/chat_Models.dart';
 import '../services/chat_service.dart';
 
 class ChatController extends GetxController {
   final ChatService _chatService = ChatService();
-  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Observable list of chat rooms
   var chatRooms = <ChatRoom>[].obs;
-
-  // Observable list of messages for the selected chat room
   var messages = <ChatMessage>[].obs;
+  RxString currentUserId = ''.obs;
+  RxString friendId = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchChatRooms(); // Fetch chat rooms on initialization
+    fetchChatRooms();
+    setCurrentUserId();
   }
 
-  // Fetch chat rooms from Firestore and update the observable list
+  void setCurrentUserId() {
+    final currentUser = _auth.currentUser;
+    if (currentUser != null) {
+      currentUserId.value = currentUser.uid;
+    }
+  }
+
   Future<void> fetchChatRooms() async {
     try {
       List<ChatRoom> rooms = await _chatService.getChatRooms();
@@ -31,53 +43,131 @@ class ChatController extends GetxController {
     }
   }
 
-  // Add a new chat room
-  Future<void> addChatRoom(ChatRoom chatRoom) async {
+  Future<void> addChatRoom(String friendUserId) async {
     try {
-      await _chatService.createChatRoom(chatRoom);
-      fetchChatRooms(); // Refresh chat rooms after adding
+      if (currentUserId.isNotEmpty) {
+        await _chatService.createChatroom(
+          currentUserId: currentUserId.value,
+          userId: friendUserId,
+        );
+        fetchChatRooms();
+      } else {
+        print('Current user ID is not set');
+      }
     } catch (e) {
       print('Error adding chat room: $e');
     }
   }
 
-  // Delete a chat room
   Future<void> deleteChatRoom(String roomId) async {
     try {
       await _chatService.deleteChatRoom(roomId);
-      fetchChatRooms(); // Refresh chat rooms after deleting
+      fetchChatRooms();
     } catch (e) {
       print('Error deleting chat room: $e');
     }
   }
 
-  // Listen to messages in a specific chat room
-  void listenToMessages(String chatId) {
-    _chatService.getMessages(chatId).listen((snapshot) {
-      var newMessages = snapshot.docs
-          .map((doc) => ChatMessage.fromMap(doc.data() as Map<String, dynamic>))
-          .toList();
-      messages.value = newMessages; // Update the observable list of messages
-    });
+  Future<String?> sendMessage({
+    required String message,
+    required String chatroomId,
+    required String receiverId,
+  }) async {
+    try {
+      final messageId = const Uuid().v1();
+      final now = DateTime.now();
+
+      ChatMessage newMessage = ChatMessage(
+        message: message,
+        messageId: messageId,
+        senderId: currentUserId.value,
+        receiverId: receiverId,
+        timestamp: now,
+        seen: false,
+        messageType: 'text',
+      );
+
+      DocumentReference myChatroomRef = FirebaseFirestore.instance
+          .collection(FirebaseCollectionNames.chatrooms)
+          .doc(chatroomId);
+
+      await myChatroomRef
+          .collection(FirebaseCollectionNames.message)
+          .doc(messageId)
+          .set(newMessage.toMap());
+
+      await myChatroomRef.update({
+        FirebaseFieldNames.lastMessage: message,
+        FirebaseFieldNames.lastMessageTs: Timestamp.fromDate(now).millisecondsSinceEpoch,
+      });
+
+      return null;
+    } catch (e) {
+      return e.toString();
+    }
   }
 
-  // Send a message to the chat room
-  Future<void> sendMessage(String chatId, String messageContent, TextEditingController messageController) async {
+  Future<String?> sendFileMessage({
+    required File file,
+    required String chatroomId,
+    required String receiverId,
+    required String messageType,
+  }) async {
     try {
-      final currentUser = _auth.currentUser;
+      final messageId = const Uuid().v1();
+      final now = DateTime.now();  // Use DateTime.now()
 
-      if (currentUser != null) {
-        ChatMessage message = ChatMessage(
-          sender: currentUser.email ?? 'Unknown',
-          senderName: currentUser.displayName ?? 'Unknown', // Pass the user's display name
-          content: messageContent,
-          timestamp: DateTime.now(),
-        );
-        await _chatService.sendMessage(chatId, message);
-        messageController.clear(); // Clear the text field after sending the message
-      }
+      Reference ref = _storage.ref(messageType).child(messageId);
+      TaskSnapshot snapshot = await ref.putFile(file);
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      ChatMessage newMessage = ChatMessage(
+        message: downloadUrl,
+        messageId: messageId,
+        senderId: currentUserId.value,
+        receiverId: receiverId,
+        timestamp: now,
+        seen: false,
+        messageType: messageType,
+      );
+
+      DocumentReference myChatroomRef = FirebaseFirestore.instance
+          .collection(FirebaseCollectionNames.chatrooms)
+          .doc(chatroomId);
+
+      await myChatroomRef
+          .collection(FirebaseCollectionNames.message)
+          .doc(messageId)
+          .set(newMessage.toMap());
+
+      await myChatroomRef.update({
+        FirebaseFieldNames.lastMessage: 'Sent a $messageType',
+        FirebaseFieldNames.lastMessageTs: Timestamp.fromDate(now).millisecondsSinceEpoch,
+      });
+
+      return null;
     } catch (e) {
-      print('Error sending message: $e');
+      return e.toString();
+    }
+  }
+
+  Future<String?> seenMessage({
+    required String chatroomId,
+    required String messageId,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection(FirebaseCollectionNames.chatrooms)
+          .doc(chatroomId)
+          .collection(FirebaseCollectionNames.message)
+          .doc(messageId)
+          .update({
+        FirebaseFieldNames.seen: true,
+      });
+
+      return null;
+    } catch (e) {
+      return e.toString();
     }
   }
 }

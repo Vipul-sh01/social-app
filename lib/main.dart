@@ -47,6 +47,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/profile', page: () => ProfileScreen()),
         GetPage(name: '/search', page: () => UserListScreen()),
         GetPage(name: '/accept', page: () => FriendRequestScreen()),
+        // GetPage(name: '/friend', page: () => FriendsListPage()),
         GetPage(name: '/chatroom', page: () => ChatRoomPage(roomId: Get.parameters['roomId']!,)),
         GetPage(name: '/editProfile', page: () => EditProfileScreen()),
         GetPage(name: '/chat', page: () => ChatScreen(Get.parameters['chatId']!)),

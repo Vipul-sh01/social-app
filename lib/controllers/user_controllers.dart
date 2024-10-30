@@ -13,9 +13,9 @@ class UserController extends GetxController {
   var selectedImage = Rx<File?>(null);
   var isLoading = false.obs;
   var errorMessage = ''.obs;
-  var userModel = Rx<UserModel?>(null);  // Assuming you're using this to track the user model
+  var userModel = Rx<UserModel?>(null);
+  var friendsList = Rx<List<String>>([]);
 
-  // Constructor
   UserController(this._firebaseService);
 
   Future<void> pickImage() async {
@@ -38,24 +38,17 @@ class UserController extends GetxController {
   }) async {
     isLoading.value = true;
     try {
-      // Validate required fields
       if ([fullName, email, password].any((field) => field.trim().isEmpty)) {
         throw ApiError(statusCode: 400, message: "All fields are required");
       }
-
-      // Register user with email and password
       String userId = await _firebaseService.registerWithEmail(email, password);
-
-      // Upload profile picture if selected
       if (selectedImage.value != null) {
         profilePictureUrl = await _firebaseService.uploadProfileImage(selectedImage.value!, userId);
       }
-
-      // Create user model
       UserModel userModel = UserModel(
         fullName: fullName,
         email: email,
-        password: password,  // Consider hashing the password before saving
+        password: password,
         profilePictureUrl: profilePictureUrl,
         age: age,
         gender: gender,
@@ -63,7 +56,6 @@ class UserController extends GetxController {
         maritalStatus: maritalStatus,
       );
 
-      // Save user data to Firestore under 'users' collection
       await _firebaseService.saveUserData(userModel, userId);
 
       // Navigate to home screen after successful registration
@@ -120,6 +112,7 @@ class UserController extends GetxController {
       isLoading.value = false;
     }
   }
+
 
   Future<void> loadUserProfile() async {
     isLoading.value = true;

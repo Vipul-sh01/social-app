@@ -37,7 +37,6 @@ class UserModel {
       friends: List<String>.from(data?['friends'] ?? []),
       friendRequests: List<String>.from(data?['friendRequests'] ?? []),
       sentRequests: List<String>.from(data?['sentRequests'] ?? []),
-      // Note: Add default values or handle missing fields accordingly
     );
   }
 
@@ -74,6 +73,6 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() {
-    return toMap(); // If both methods are supposed to be the same, you can use the same implementation
+    return toMap(); 
   }
 }

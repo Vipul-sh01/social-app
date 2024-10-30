@@ -91,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (user != null) {
                     String roomId = "roomId";
                     Get.to(()=> ChatRoomPage(roomId: roomId));
+                    // Get.to(()=>FriendsListPage());
                   } else {
                     print("User is not logged in");
                   }

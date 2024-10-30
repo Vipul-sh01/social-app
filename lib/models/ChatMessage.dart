@@ -1,35 +1,50 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show immutable;
+import '../constants/firebase_field_names.dart';
 
+
+@immutable
 class ChatMessage {
-  final String sender;
-  final String senderName; // Add this field
-  final String content;
+  final String message;
+  final String messageId;
+  final String senderId;
+  final String receiverId;
   final DateTime timestamp;
+  final bool seen;
+  final String messageType;
 
-  ChatMessage({
-    required this.sender,
-    required this.senderName, // Add it to the constructor
-    required this.content,
+  const ChatMessage({
+    required this.message,
+    required this.messageId,
+    required this.senderId,
+    required this.receiverId,
     required this.timestamp,
+    required this.seen,
+    required this.messageType,
   });
 
-  // Convert a ChatMessage to a Map for Firestore
   Map<String, dynamic> toMap() {
-    return {
-      'sender': sender,
-      'senderName': senderName, // Include this in the map
-      'content': content,
-      'timestamp': timestamp,
+    return <String, dynamic>{
+      FirebaseFieldNames.message: message,
+      FirebaseFieldNames.messageId: messageId,
+      FirebaseFieldNames.senderId: senderId,
+      FirebaseFieldNames.receiverId: receiverId,
+      FirebaseFieldNames.timestamp: timestamp.millisecondsSinceEpoch,
+      FirebaseFieldNames.seen: seen,
+      FirebaseFieldNames.messageType: messageType,
     };
   }
 
-  // Create a ChatMessage from a Firestore Map
   factory ChatMessage.fromMap(Map<String, dynamic> map) {
     return ChatMessage(
-      sender: map['sender'],
-      senderName: map['senderName'] ?? '', // Retrieve 'senderName' or provide a default value
-      content: map['content'],
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      message: map[FirebaseFieldNames.message] as String,
+      messageId: map[FirebaseFieldNames.messageId] as String,
+      senderId: map[FirebaseFieldNames.senderId] as String,
+      receiverId: map[FirebaseFieldNames.receiverId] as String,
+      timestamp: DateTime.fromMillisecondsSinceEpoch(
+        map[FirebaseFieldNames.timestamp] as int,
+      ),
+      seen: map[FirebaseFieldNames.seen] as bool,
+      messageType: map[FirebaseFieldNames.messageType] as String,
     );
   }
 }

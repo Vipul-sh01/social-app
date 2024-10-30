@@ -12,6 +12,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController bioController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
 
   String selectedMaritalStatus = 'Single';
 
@@ -19,6 +20,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     fullNameController.text = userController.userModel.value?.fullName ?? '';
+    emailController.text = userController.userModel.value?.email ??'';
     bioController.text = userController.userModel.value?.bio ?? '';
     selectedMaritalStatus = userController.userModel.value?.maritalStatus ?? 'Single';
   }
@@ -43,6 +45,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             TextField(
               controller: fullNameController,
               decoration: const InputDecoration(labelText: 'Full Name'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: emailController,
+              decoration: const InputDecoration(labelText: 'email'),
             ),
             const SizedBox(height: 10),
             TextField(

@@ -45,9 +45,9 @@ class FriendRequestScreen extends StatelessWidget {
                   if (!friendSnapshot.hasData || friendSnapshot.data == null) {
                     return ListTile(title: Text('Friend data not found.'));
                   }
-
                   var friendData = friendSnapshot.data!.data() as Map<String, dynamic>? ?? {};
                   String friendName = friendData['fullName'] ?? 'Unknown';
+
 
                   return ListTile(
                     title: Text(friendName),

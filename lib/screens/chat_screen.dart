@@ -7,7 +7,6 @@ import '../models/ChatMessage.dart';
 
 class ChatScreen extends StatefulWidget {
   final String chatId;
-
   ChatScreen(this.chatId);
 
   @override
@@ -28,7 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
     userController = Get.find<GetDataController>();
 
     // Start listening to messages and user data
-    _chatController.listenToMessages(widget.chatId);
+    _chatController.fetchChatRooms(); // Fetch chat rooms to ensure data is loaded
     userController.fetchUserData();
   }
 
@@ -56,7 +55,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       ChatMessage message = messages[index];
-                      bool isSentByMe = message.sender == _auth.currentUser?.email;
+                      bool isSentByMe = message.senderId == _auth.currentUser?.uid;
 
                       return Align(
                         alignment: isSentByMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -71,7 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                message.sender,
+                                message.senderId,  // Displaying senderId, consider mapping to a display name if available
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: isSentByMe ? Colors.white : Colors.blueAccent,
@@ -79,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                message.content,
+                                message.message,
                                 style: TextStyle(
                                   color: isSentByMe ? Colors.white : Colors.black87,
                                 ),
@@ -118,10 +117,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(Icons.send),
-                      onPressed: () {
+                      onPressed: () async {
                         if (_auth.currentUser != null && messageController.text.isNotEmpty) {
                           // Pass required arguments to sendMessage
-                          _chatController.sendMessage(widget.chatId, messageController.text, messageController);
+                          await _chatController.sendMessage(
+                            message: messageController.text,
+                            chatroomId: widget.chatId,
+                            receiverId: userController.user.value?.email ?? '',  // Fetch receiverId if available
+                          );
+                          messageController.clear();
                         }
                       },
                     ),
